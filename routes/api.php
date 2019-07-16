@@ -13,6 +13,21 @@ use Illuminate\Http\Request;
 |
 */
 
+$api = app('Dingo\Api\Routing\Router');
+
+$api->version('v1', ['middleware' => 'bindings'], function($api) {
+  $api->get('/', function() {
+     $appUrl = getenv('APP_URL');
+     $apiName = getenv('API_NAME');
+   
+     return [
+       'App URL' => $appUrl,
+       'API Name' => $apiName
+     ];
+  });
+  $api->post('login', 'App\Http\Controllers\Api\V1\AuthenticateController@login');
+});
+
 Route::middleware('auth:api')->get('/user', function (Request $request) {
     return $request->user();
 });
