@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Role;
 use Illuminate\Http\Request;
 
 /*
@@ -15,19 +16,41 @@ use Illuminate\Http\Request;
 
 $api = app('Dingo\Api\Routing\Router');
 
-$api->version('v1', ['middleware' => 'bindings'], function($api) {
-  $api->get('/', function() {
-     $appUrl = getenv('APP_URL');
-     $apiName = getenv('API_NAME');
-   
-     return [
-       'App URL' => $appUrl,
-       'API Name' => $apiName
-     ];
-  });
-  $api->post('login', 'App\Http\Controllers\Api\V1\AuthenticateController@login');
+$api->version('v1', function ($api) {
+    $api->get('/', function () {
+
+        Role::create([
+            'id' => 'ADMIN',
+            'description' => 'greatness'
+        ]);
+
+        $appUrl = getenv('APP_URL');
+        $apiName = getenv('API_NAME');
+
+        return [
+            'App URL' => $appUrl,
+            'API Name' => $apiName
+        ];
+    });
 });
 
-Route::middleware('auth:api')->get('/user', function (Request $request) {
-    return $request->user();
+/**
+ * Authentication routes
+ */
+$api->version('v1', ['middleware' => 'bindings'], function ($api) {
+    $api->group(['prefix' => 'auth'], function ($api) {
+        $api->post('login', 'App\Http\Controllers\Api\V1\AuthenticateController@login');
+    });
+    $api->group(['prefix' => 'auth', 'middleware' => 'api.auth'], function ($api) {
+        $api->get('user', 'App\Http\Controllers\Api\V1\AuthenticateController@me');
+        $api->get('logout', 'App\Http\Controllers\Api\V1\AuthenticateController@logout');
+        $api->get('refresh', 'App\Http\Controllers\Api\V1\AuthenticateController@refresh');
+    });
+});
+
+// , 'api.auth'
+$api->version('v1', ['middleware' => ['bindings']], function ($api) {
+    $api->group(['prefix' => 'settings'], function ($api) {
+        $api->resource('users', 'App\Http\Controllers\Api\V1\UsersController');
+    });
 });
