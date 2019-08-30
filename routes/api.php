@@ -48,8 +48,7 @@ $api->version('v1', ['middleware' => 'bindings'], function ($api) {
     });
 });
 
-// , 'api.auth'
-$api->version('v1', ['middleware' => ['bindings']], function ($api) {
+$api->version('v1', ['middleware' => ['bindings', 'api.auth']], function ($api) {
     $api->group(['prefix' => 'settings'], function ($api) {
         $api->resource('users', 'App\Http\Controllers\Api\V1\UsersController');
     });

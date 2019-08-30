@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Http\Requests\StoreUserRequest;
+use App\Http\Requests\UpdateUserRequest;
 use App\User;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
@@ -22,26 +24,19 @@ class UsersController extends Controller
     }
 
     /**
-     * Show the form for creating a new resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function create()
-    {
-        //
-    }
-
-    /**
      * Store a newly created resource in storage.
      *
-     * @param  \Illuminate\Http\Request  $request
+     * @param  StoreUserRequest  $request
      * @return \Illuminate\Http\Response
      */
-    public function store(Request $request)
+    public function store(StoreUserRequest $request)
     {
         $userDetails = $request->only(['name', 'email', 'password']);
         $userDetails['password'] = Hash::make($userDetails['password']);
+        $role = $request->only('role');
+
         $user = User::create($userDetails);
+        $user->roles()->attach($role);
 
         return $user;
     }
@@ -72,22 +67,34 @@ class UsersController extends Controller
      * Update the specified resource in storage.
      *
      * @param  \Illuminate\Http\Request  $request
-     * @param  int  $id
+     * @param  User  $user
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, $id)
+    public function update(UpdateUserRequest $request, User $user)
     {
-        //
+        $userDetails = $request->only(['name', 'email', 'password']);
+        $userDetails['password'] = Hash::make($userDetails['password']);
+        $role = $request->only('role');
+
+        $user->fill($userDetails);
+        $user->roles()->sync($role);
+        $user->save();
+
+        return $user;
     }
 
     /**
      * Remove the specified resource from storage.
      *
-     * @param  int  $id
+     * @param  User  $user
      * @return \Illuminate\Http\Response
      */
-    public function destroy($id)
+    public function destroy(User $user)
     {
-        //
+        if ($user->delete()) {
+            return response()->noContent();
+        }
+
+        return abort(422);
     }
 }
